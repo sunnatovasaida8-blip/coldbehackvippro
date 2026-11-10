@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>COLDBEHACK</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { background-color: #0b0e14; color: #fff; min-height: 100vh; display: flex; justify-content: center; align-items: center; overflow-x: hidden; position: relative; }
+    
+    /* Snow Canvas for Coldbet */
+    #snow-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; display: none; }
+
+    .app-container { width: 100%; max-width: 420px; background: #131926; border-radius: 20px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); z-index: 2; position: relative; border: 1px solid #1f293d; }
+    
+    /* Coldbet Theme */
+    .theme-coldbet { background: linear-gradient(180deg, #0d1b2a 0%, #1b263b 100%); border-color: #00b4d8; box-shadow: 0 0 20px rgba(0, 180, 216, 0.4); }
+    /* Linebet Theme */
+    .theme-linebet { background: linear-gradient(180deg, #0b2318 0%, #123c28 100%); border-color: #2ec4b6; box-shadow: 0 0 20px rgba(46, 196, 182, 0.4); }
+
+    .header { text-align: center; margin-bottom: 20px; }
+    .header h1 { font-size: 24px; font-weight: 800; letter-spacing: 1px; color: #fff; text-shadow: 0 0 10px rgba(255,255,255,0.5); }
+    .badge { display: inline-block; background: #00f5d4; color: #000; font-size: 11px; padding: 3px 8px; border-radius: 10px; font-weight: bold; margin-top: 5px; }
+
+    .promo-box { background: rgba(255,255,255,0.05); border: 1px dashed #ffffff44; padding: 10px; border-radius: 10px; text-align: center; margin-bottom: 15px; cursor: pointer; }
+    .promo-code { font-weight: bold; color: #ffbe0b; font-size: 18px; margin-left: 5px; }
+
+    .input-group { margin-bottom: 12px; }
+    .input-group label { font-size: 12px; color: #a0aec0; margin-bottom: 5px; display: block; }
+    .input-group input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #2d3748; background: #0f141d; color: #fff; font-size: 14px; outline: none; }
+    .input-group input:focus { border-color: #00b4d8; }
+
+    .platform-selector { display: flex; gap: 10px; margin-bottom: 20px; }
+    .platform-btn { flex: 1; padding: 12px; border-radius: 10px; border: 2px solid #2d3748; background: #1a202c; color: #fff; font-weight: bold; cursor: pointer; text-align: center; transition: 0.3s; }
+    .platform-btn.active-cold { border-color: #00b4d8; background: #0077b6; }
+    .platform-btn.active-line { border-color: #2ec4b6; background: #15573f; }
+
+    .btn-submit { width: 100%; padding: 14px; border: none; border-radius: 10px; background: linear-gradient(90deg, #9d4edd, #c77dff); color: #fff; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+    
+    .games-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 15px; }
+    .game-card { background: rgba(255,255,255,0.05); border-radius: 12px; padding: 15px; text-align: center; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); transition: 0.2s; }
+    .game-card:hover { transform: translateY(-3px); }
+    .game-icon { font-size: 30px; margin-bottom: 5px; }
+    .game-title { font-size: 13px; font-weight: bold; }
+
+    .links-bar { display: flex; justify-content: space-between; margin-top: 20px; gap: 10px; }
+    .link-btn { flex: 1; text-decoration: none; text-align: center; padding: 10px; border-radius: 8px; font-size: 12px; font-weight: bold; color: #fff; background: rgba(255,255,255,0.1); }
+    
+    .error-msg { color: #ff4d4d; font-size: 12px; margin-top: 5px; display: none; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+
+  <canvas id="snow-canvas"></canvas>
+
+  <div class="app-container" id="app">
+    <!-- LOGIN SCREEN -->
+    <div id="login-screen">
+      <div class="header">
+        <h1>COLDBEHACK</h1>
+        <span class="badge">OFFICIAL SIGNAL BOT</span>
+      </div>
+
+      <div class="platform-selector">
+        <div class="platform-btn active-cold" id="btn-coldbet" onclick="selectPlatform('coldbet')">Coldbet</div>
+        <div class="platform-btn" id="btn-linebet" onclick="selectPlatform('linebet')">Linebet</div>
+      </div>
+
+      <div class="promo-box" onclick="copyPromo()">
+        Promokod: <span class="promo-code" id="promo-display">MUZZ</span> (Nusxalash uchun bosing 📋)
+      </div>
+
+      <div class="input-group">
+        <label>Hisob ID ingizni kiriting:</label>
+        <input type="text" id="user-id" placeholder="ID masalan: 12345678">
+        <div class="error-msg" id="id-error">ID kiritilmadi!</div>
+      </div>
+
+      <div class="input-group">
+        <label>Kirish kodi (Key):</label>
+        <input type="text" id="user-key" placeholder="Kodni kiriting">
+        <div class="error-msg" id="key-error">Kiritilgan kalit kodi noto'g'ri!</div>
+      </div>
+
+      <button class="btn-submit" onclick="login()">KIRISH VA FAOLLASHTIRISH</button>
+    </div>
+
+    <!-- MAIN DASHBOARD (GAMES) -->
+    <div id="main-screen" class="hidden">
+      <div class="header">
+        <h1 id="selected-title">COLDBET SIGNALS</h1>
+        <span class="badge">TIZIM FAOL: 100%</span>
+      </div>
+
+      <div class="games-grid">
+        <div class="game-card" onclick="getSignal('Apple of Fortune')">
+          <div class="game-icon">🍎</div>
+          <div class="game-title">Apple of Fortune</div>
+        </div>
+        <div class="game-card" onclick="getSignal('Thimbles')">
+          <div class="game-icon">🔔</div>
+          <div class="game-title">Thimbles</div>
+        </div>
+        <div class="game-card" onclick="getSignal('Mines')">
+          <div class="game-icon">💎</div>
+          <div class="game-title">Mines</div>
+        </div>
+        <div class="game-card" onclick="getSignal('Wild West Gold')">
+          <div class="game-icon">🤠</div>
+          <div class="game-title">Wild West Gold</div>
+        </div>
+        <div class="game-card" onclick="getSignal('Kamikaze')">
+          <div class="game-icon">✈️</div>
+          <div class="game-title">Kamikaze</div>
+        </div>
+        <div class="game-card" onclick="getSignal('Swamp Land')">
+          <div class="game-icon">🐸</div>
+          <div class="game-title">Swamp Land</div>
+        </div>
+        <div class="game-card" style="grid-column: span 2;" onclick="getSignal('Aviator Predictor')">
+          <div class="game-icon">🚀</div>
+          <div class="game-title">Aviator Predictor</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LOWER NAVIGATION LINKS -->
+    <div class="links-bar">
+      <a href="https://t.me/MUZZCOLD" target="_blank" class="link-btn">📢 Telegram Kanal</a>
+      <a href="https://t.me/ZYNEX2_x27" target="_blank" class="link-btn">👨‍💻 Admin Support</a>
+    </div>
+  </div>
+
+  <script>
+    let currentPlatform = 'coldbet';
+    const config = {
+      coldbet: { promo: 'MUZZ', key: 'MUZZ', theme: 'theme-coldbet', title: 'COLDBET SIGNALS' },
+      linebet: { promo: 'BE127', key: 'BE127', theme: 'theme-linebet', title: 'LINEBET SIGNALS' }
+    };
+
+    function selectPlatform(plat) {
+      currentPlatform = plat;
+      document.getElementById('btn-coldbet').className = 'platform-btn ' + (plat === 'coldbet' ? 'active-cold' : '');
+      document.getElementById('btn-linebet').className = 'platform-btn ' + (plat === 'linebet' ? 'active-line' : '');
+      document.getElementById('promo-display').innerText = config[plat].promo;
+      
+      const app = document.getElementById('app');
+      const canvas = document.getElementById('snow-canvas');
+      
+      if(plat === 'coldbet') {
+        app.className = 'app-container theme-coldbet';
+        canvas.style.display = 'block';
+        startSnow();
+      } else {
+        app.className = 'app-container theme-linebet';
+        canvas.style.display = 'none';
+      }
+    }
+
+    function copyPromo() {
+      const code = config[currentPlatform].promo;
+      navigator.clipboard.writeText(code);
+      alert('Promokod nusxalandi: ' + code);
+    }
+
+    function login() {
+      const id = document.getElementById('user-id').value;
+      const key = document.getElementById('user-key').value;
+      let valid = true;
+
+      if(!id) {
+        document.getElementById('id-error').style.display = 'block';
+        valid = false;
+      } else {
+        document.getElementById('id-error').style.display = 'none';
+      }
+
+      if(key !== config[currentPlatform].key) {
+        document.getElementById('key-error').style.display = 'block';
+        valid = false;
+      } else {
+        document.getElementById('key-error').style.display = 'none';
+      }
+
+      if(valid) {
+        document.getElementById('login-screen').classList.add('hidden');
+        document.getElementById('main-screen').classList.remove('hidden');
+        document.getElementById('selected-title').innerText = config[currentPlatform].title;
+      }
+    }
+
+    function getSignal(gameName) {
+      alert(gameName + " uchun aniq signal olindi! (Algoritm 100% tayyor)");
+    }
+
+    // Snowfall Effect Script for Coldbet
+    const canvas = document.getElementById('snow-canvas');
+    const ctx = canvas.getContext('2d');
+    let width = canvas.width = window.innerWidth;
+    let height = canvas.height = window.innerHeight;
+    let flakes = [];
+
+    function startSnow() {
+      flakes = [];
+      for(let i=0; i<60; i++) {
+        flakes.push({
+          x: Math.random() * width,
+          y: Math.random() * height,
+          r: Math.random() * 3 + 1,
+          d: Math.random() * 1
+        });
+      }
+    }
+
+    function drawSnow() {
+      if(currentPlatform !== 'coldbet') return;
+      ctx.clearRect(0, 0, width, height);
+      ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
+      ctx.beginPath();
+      for(let i = 0; i < flakes.length; i++) {
+        let p = flakes[i];
+        ctx.moveTo(p.x, p.y);
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI*2, true);
+      }
+      ctx.fill();
+      updateSnow();
+      requestAnimationFrame(drawSnow);
+    }
+
+    function updateSnow() {
+      for(let i = 0; i < flakes.length; i++) {
+        let p = flakes[i];
+        p.y += Math.cos(p.d) + 1 + p.r/2;
+        p.x += Math.sin(p.d) * 2;
+        if(p.y > height) {
+          flakes[i] = {x: Math.random()*width, y: 0, r: p.r, d: p.d};
+        }
+      }
+    }
+
+    selectPlatform('coldbet');
+    drawSnow();
+  </script>
+</body>
+</html>
